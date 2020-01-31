@@ -23,7 +23,7 @@ function squeezeFromCustomBlocks (blocks: SFCBlock[]): SFCI18nBlock[] {
       debug('i18n block attrs', block.attrs)
 
       let lang = block.attrs.lang
-      lang = (!lang || typeof lang !== 'string') ? 'json' : lang
+      lang = (!lang || typeof lang !== 'string') ? 'yaml' : lang
 
       const i18nBlock: SFCI18nBlock = {
         lang: lang as I18nLang,

@@ -9,6 +9,7 @@ import {
 import squeeze from '../squeezer'
 import fs from 'fs'
 import deepmerge from 'deepmerge'
+import yaml from 'js-yaml'
 
 import {
   Locale,
@@ -140,7 +141,7 @@ function writeLocaleMessages (messages: LocaleMessages, args: Arguments<SqueezeO
   const split = args.split
   const output = resolve(args.output)
   if (!split) {
-    fs.writeFileSync(output, JSON.stringify(messages, null, 2))
+    fs.writeFileSync(output, yaml.safeDump(messages, { indent: 2 }))
   } else {
     splitLocaleMessages(output, messages)
   }
@@ -150,7 +151,7 @@ function splitLocaleMessages (path: string, messages: LocaleMessages) {
   const locales: Locale[] = Object.keys(messages)
   const write = () => {
     locales.forEach(locale => {
-      fs.writeFileSync(`${path}/${locale}.json`, JSON.stringify(messages[locale], null, 2))
+      fs.writeFileSync(`${path}/${locale}.json`, yaml.safeDump(messages, { indent: 2 }))
     })
   }
   try {
