@@ -115,7 +115,7 @@ function generate (meta: MetaLocaleMessage): LocaleMessages {
     console.log('blocks')
     console.log(blocks)
 
-    if (!blocks.length) continue
+    if (!blocks.length || !blocks[0].messages.en) continue
 
     const blockContent = blocks[0].messages.en
     const componentName = Object.keys(blockContent)[0]
