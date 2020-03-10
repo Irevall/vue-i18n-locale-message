@@ -4,7 +4,7 @@ import {
   parsePath,
   readSFC,
   loadNamespaceDictionary,
-  getExternalLocaleMessages
+  getExternalLocaleMessages, stringifyContent
 } from '../utils'
 import squeeze from '../squeezer'
 import fs from 'fs'
@@ -27,7 +27,8 @@ type SqueezeOptions = {
   bundleWith?: string
   bundleMatch?: string
   namespace?: string
-  output: string
+  output: string,
+  format?: string
 }
 
 export const command = 'squeeze'
@@ -70,6 +71,12 @@ export const builder = (args: Argv): Argv<SqueezeOptions> => {
       default: outputDefault,
       describe: 'path to output squeezed locale messages'
     })
+    .option('format', {
+      type: 'string',
+      alias: 'f',
+      default: 'json',
+      describe: 'format which will be used for input and output'
+    })
 }
 
 export const handler = async (args: Arguments<SqueezeOptions>) => {
@@ -86,7 +93,7 @@ export const handler = async (args: Arguments<SqueezeOptions>) => {
     console.warn('cannot load external locale messages failed')
   }
 
-  const meta = squeeze(targetPath, readSFC(targetPath))
+  const meta = squeeze(targetPath, readSFC(targetPath), args.format)
   const messages = deepmerge(generate(meta), externalMessages)
 
   writeLocaleMessages(messages, args)
@@ -167,7 +174,7 @@ function writeLocaleMessages (messages: LocaleMessages, args: Arguments<SqueezeO
   const split = args.split
   const output = resolve(args.output)
   if (!split) {
-    fs.writeFileSync(output, yaml.safeDump(messages, { indent: 2 }))
+    fs.writeFileSync(output, stringifyContent(messages, args.format))
   } else {
     splitLocaleMessages(output, messages)
   }

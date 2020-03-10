@@ -6,23 +6,23 @@ import { reflectSFCDescriptor, parseContent } from './utils'
 import { debug as Debug } from 'debug'
 const debug = Debug('vue-i18n-locale-message:squeezer')
 
-export default function squeeze (basePath: string, files: SFCFileInfo[]): MetaLocaleMessage {
+export default function squeeze (basePath: string, files: SFCFileInfo[], format?: string): MetaLocaleMessage {
   const descriptors = reflectSFCDescriptor(basePath, files)
   return descriptors.reduce((meta, descriptor) => {
     descriptor.customBlocks.sort((a, b) => { return (a.start as number) - (b.start as number) })
-    const i18nBlocks = squeezeFromCustomBlocks(descriptor.customBlocks)
+    const i18nBlocks = squeezeFromCustomBlocks(descriptor.customBlocks, format)
     debug('squeezeFromCustomBlocks: i18nBlocks', JSON.stringify(i18nBlocks, null, 2))
     meta.components[descriptor.contentPath] = i18nBlocks
     return meta
   }, { target: basePath, components: {}} as MetaLocaleMessage)
 }
 
-function squeezeFromCustomBlocks (blocks: SFCBlock[]): SFCI18nBlock[] {
+function squeezeFromCustomBlocks (blocks: SFCBlock[], format?: string): SFCI18nBlock[] {
   return blocks.map(block => {
     if (block.type === 'i18n') {
       debug('i18n block attrs', block.attrs)
 
-      let lang = block.attrs.lang
+      let lang = format || block.attrs.lang
       lang = (!lang || typeof lang !== 'string') ? 'yaml' : lang
 
       const i18nBlock: SFCI18nBlock = {
