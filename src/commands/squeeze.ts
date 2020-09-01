@@ -28,7 +28,8 @@ type SqueezeOptions = {
   bundleMatch?: string
   namespace?: string
   output: string,
-  format?: string
+  format: string,
+  structurePrefix: boolean
 }
 
 export const command = 'squeeze'
@@ -77,6 +78,12 @@ export const builder = (args: Argv): Argv<SqueezeOptions> => {
       default: 'json',
       describe: 'format which will be used for input and output'
     })
+    .option('structurePrefix', {
+      type: 'boolean',
+      alias: 'p',
+      default: false,
+      describe: 'export keys with prefix matching file structure'
+    })
 }
 
 export const handler = async (args: Arguments<SqueezeOptions>) => {
@@ -94,12 +101,12 @@ export const handler = async (args: Arguments<SqueezeOptions>) => {
   }
 
   const meta = squeeze(targetPath, readSFC(targetPath), args.format)
-  const messages = deepmerge(generate(meta), externalMessages)
+  const messages = deepmerge(generate(meta, args.structurePrefix), externalMessages)
 
   writeLocaleMessages(messages, args)
 }
 
-function generate (meta: MetaLocaleMessage): LocaleMessages {
+function generate (meta: MetaLocaleMessage, structurePrefix: boolean): LocaleMessages {
   const { target, components } = meta
   let messages: LocaleMessages = {}
 
@@ -110,61 +117,56 @@ function generate (meta: MetaLocaleMessage): LocaleMessages {
     }, messages)
   }
 
-  console.log('target');
-  console.log(target);
-
-  console.log('components');
-  console.log(components)
-
-
   for (const component of Object.keys(components)) {
     const blocks = components[component]
-    console.log('blocks')
-    console.log(blocks)
 
-    if (!blocks.length || !blocks[0].messages.en) continue
+    if (!blocks.length || !blocks[0].messages) continue
 
-    const blockContent = blocks[0].messages.en
-    const componentName = Object.keys(blockContent)[0]
-    const componentMessages = blockContent[componentName]
-
-    if (!messages[componentName]) {
-      messages[componentName] = componentMessages
-    } else {
-      messages[componentName] = { ...messages[componentName], ...componentMessages }
+    if (structurePrefix || !structurePrefix) {
+      debug(`generate component = ${component}`)
+      const parsed = parsePath(target, component)
+      messages = blocks.reduce((messages, block) => {
+        debug(`generate current messages = ${JSON.stringify(messages)}`)
+        const locales = Object.keys(block.messages)
+        messages = assignLocales(locales, messages)
+        locales.reduce((messages, locale) => {
+          if (block.messages[locale]) {
+            const localeMessages = messages[locale]
+            const localeBlockMessages = block.messages[locale]
+            let target: any = localeMessages // eslint-disable-line
+            const hierarchy = parsed.hierarchy.concat()
+            while (hierarchy.length >= 0) {
+              const key = hierarchy.shift()
+              if (!key) {
+                break
+              }
+              if (!target[key]) {
+                target[key] = {}
+              }
+              target = target[key]
+            }
+            Object.assign(target, localeBlockMessages)
+            return messages
+          }
+          return messages
+        }, messages)
+        return messages
+      }, messages)
     }
 
-    // debug(`generate component = ${component}`)
-    // const parsed = parsePath(target, component)
-    // messages = blocks.reduce((messages, block) => {
-    //   debug(`generate current messages = ${JSON.stringify(messages)}`)
-    //   const locales = Object.keys(block.messages)
-    //   messages = assignLocales(locales, messages)
-    //   locales.reduce((messages, locale) => {
-    //     if (block.messages[locale]) {
-    //       const localeMessages = messages[locale]
-    //       const localeBlockMessages = block.messages[locale]
-    //       let target: any = localeMessages // eslint-disable-line
-    //       const hierarchy = parsed.hierarchy.concat()
-    //       while (hierarchy.length >= 0) {
-    //         const key = hierarchy.shift()
-    //         if (!key) { break }
-    //         if (!target[key]) {
-    //           target[key] = {}
-    //         }
-    //         target = target[key]
-    //       }
-    //       Object.assign(target, localeBlockMessages)
-    //       return messages
-    //     }
-    //     return messages
-    //   }, messages)
-    //   return messages
-    // }, messages)
+    // else {
+    //   const blockContent = blocks[0].messages
+    //   const componentName = Object.keys(blockContent)[0]
+    //   const componentMessages = blockContent[componentName]
+    //
+    //   if (!messages[componentName]) {
+    //     messages[componentName] = componentMessages
+    //   } else {
+    //     const
+    //     messages[componentName] = { ...messages[componentName], ...componentMessages }
+    //   }
+    // }
   }
-
-  console.log('messages')
-  console.log(messages)
 
   return messages
 }
