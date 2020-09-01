@@ -4,11 +4,12 @@ import {
   parsePath,
   readSFC,
   loadNamespaceDictionary,
-  getExternalLocaleMessages
+  getExternalLocaleMessages, stringifyContent
 } from '../utils'
 import squeeze from '../squeezer'
 import fs from 'fs'
 import deepmerge from 'deepmerge'
+import yaml from 'js-yaml'
 
 import {
   Locale,
@@ -26,7 +27,9 @@ type SqueezeOptions = {
   bundleWith?: string
   bundleMatch?: string
   namespace?: string
-  output: string
+  output: string,
+  format: string,
+  structurePrefix: boolean
 }
 
 export const command = 'squeeze'
@@ -69,6 +72,18 @@ export const builder = (args: Argv): Argv<SqueezeOptions> => {
       default: outputDefault,
       describe: 'path to output squeezed locale messages'
     })
+    .option('format', {
+      type: 'string',
+      alias: 'f',
+      default: 'json',
+      describe: 'format which will be used for input and output'
+    })
+    .option('structurePrefix', {
+      type: 'boolean',
+      alias: 'p',
+      default: false,
+      describe: 'export keys with prefix matching file structure'
+    })
 }
 
 export const handler = async (args: Arguments<SqueezeOptions>) => {
@@ -85,13 +100,13 @@ export const handler = async (args: Arguments<SqueezeOptions>) => {
     console.warn('cannot load external locale messages failed')
   }
 
-  const meta = squeeze(targetPath, readSFC(targetPath))
-  const messages = deepmerge(generate(meta), externalMessages)
+  const meta = squeeze(targetPath, readSFC(targetPath), args.format)
+  const messages = deepmerge(generate(meta, args.structurePrefix), externalMessages)
 
   writeLocaleMessages(messages, args)
 }
 
-function generate (meta: MetaLocaleMessage): LocaleMessages {
+function generate (meta: MetaLocaleMessage, structurePrefix: boolean): LocaleMessages {
   const { target, components } = meta
   let messages: LocaleMessages = {}
 
@@ -102,34 +117,55 @@ function generate (meta: MetaLocaleMessage): LocaleMessages {
     }, messages)
   }
 
-  for (const [component, blocks] of Object.entries(components)) {
-    debug(`generate component = ${component}`)
-    const parsed = parsePath(target, component)
-    messages = blocks.reduce((messages, block) => {
-      debug(`generate current messages = ${JSON.stringify(messages)}`)
-      const locales = Object.keys(block.messages)
-      messages = assignLocales(locales, messages)
-      locales.reduce((messages, locale) => {
-        if (block.messages[locale]) {
-          const localeMessages = messages[locale]
-          const localeBlockMessages = block.messages[locale]
-          let target: any = localeMessages // eslint-disable-line
-          const hierarchy = parsed.hierarchy.concat()
-          while (hierarchy.length >= 0) {
-            const key = hierarchy.shift()
-            if (!key) { break }
-            if (!target[key]) {
-              target[key] = {}
+  for (const component of Object.keys(components)) {
+    const blocks = components[component]
+
+    if (!blocks.length || !blocks[0].messages) continue
+
+    if (structurePrefix || !structurePrefix) {
+      debug(`generate component = ${component}`)
+      const parsed = parsePath(target, component)
+      messages = blocks.reduce((messages, block) => {
+        debug(`generate current messages = ${JSON.stringify(messages)}`)
+        const locales = Object.keys(block.messages)
+        messages = assignLocales(locales, messages)
+        locales.reduce((messages, locale) => {
+          if (block.messages[locale]) {
+            const localeMessages = messages[locale]
+            const localeBlockMessages = block.messages[locale]
+            let target: any = localeMessages // eslint-disable-line
+            const hierarchy = parsed.hierarchy.concat()
+            while (hierarchy.length >= 0) {
+              const key = hierarchy.shift()
+              if (!key) {
+                break
+              }
+              if (!target[key]) {
+                target[key] = {}
+              }
+              target = target[key]
             }
-            target = target[key]
+            Object.assign(target, localeBlockMessages)
+            return messages
           }
-          Object.assign(target, localeBlockMessages)
           return messages
-        }
+        }, messages)
         return messages
       }, messages)
-      return messages
-    }, messages)
+    }
+
+    // else {
+    //   const blockContent = blocks[0].messages
+    //   const componentName = Object.keys(blockContent)[0]
+    //   const componentMessages = blockContent[componentName]
+    //
+    //   if (!messages[componentName]) {
+    //     messages[componentName] = componentMessages
+    //   } else {
+    //     const
+    //     messages[componentName] = { ...messages[componentName], ...componentMessages }
+    //   }
+    // }
   }
 
   return messages
@@ -140,7 +176,7 @@ function writeLocaleMessages (messages: LocaleMessages, args: Arguments<SqueezeO
   const split = args.split
   const output = resolve(args.output)
   if (!split) {
-    fs.writeFileSync(output, JSON.stringify(messages, null, 2))
+    fs.writeFileSync(output, stringifyContent(messages, args.format))
   } else {
     splitLocaleMessages(output, messages)
   }
@@ -150,7 +186,7 @@ function splitLocaleMessages (path: string, messages: LocaleMessages) {
   const locales: Locale[] = Object.keys(messages)
   const write = () => {
     locales.forEach(locale => {
-      fs.writeFileSync(`${path}/${locale}.json`, JSON.stringify(messages[locale], null, 2))
+      fs.writeFileSync(`${path}/${locale}.json`, yaml.safeDump(messages, { indent: 2 }))
     })
   }
   try {
