@@ -134,7 +134,7 @@ function generate (meta: MetaLocaleMessage, structurePrefix: boolean): LocaleMes
             const localeMessages = messages[locale]
             const localeBlockMessages = block.messages[locale]
             let target: any = localeMessages // eslint-disable-line
-            const hierarchy = parsed.hierarchy.concat()
+            const hierarchy = structurePrefix ? parsed.hierarchy.concat() : []
             while (hierarchy.length >= 0) {
               const key = hierarchy.shift()
               if (!key) {
@@ -153,19 +153,6 @@ function generate (meta: MetaLocaleMessage, structurePrefix: boolean): LocaleMes
         return messages
       }, messages)
     }
-
-    // else {
-    //   const blockContent = blocks[0].messages
-    //   const componentName = Object.keys(blockContent)[0]
-    //   const componentMessages = blockContent[componentName]
-    //
-    //   if (!messages[componentName]) {
-    //     messages[componentName] = componentMessages
-    //   } else {
-    //     const
-    //     messages[componentName] = { ...messages[componentName], ...componentMessages }
-    //   }
-    // }
   }
 
   return messages
