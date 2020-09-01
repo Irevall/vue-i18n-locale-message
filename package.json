@@ -1,14 +1,14 @@
 {
-  "name": "vue-i18n-locale-message",
-  "description": "i18n locale messages management tool / library for vue-i18n",
-  "version": "0.16.3",
+  "name": "@irevall/vue-i18n-locale-message",
+  "description": "Fork of @kazupon/vue-i18n-locale-message for custom usage",
+  "version": "0.1.0",
   "author": {
-    "name": "kazuya kawaguchi",
-    "email": "kawakazu80@gmail.com"
+    "name": "Kuba Marek",
+    "email": "kubajmarek@gmail.com"
   },
   "bin": "lib/cli.js",
   "bugs": {
-    "url": "https://github.com/kazupon/vue-i18n-locale-message/issues"
+    "url": "https://github.com/Irevall/vue-i18n-locale-message/issues"
   },
   "changelog": {
     "labels": {
@@ -73,7 +73,7 @@
     "types/index.d.ts",
     "lib"
   ],
-  "homepage": "https://github.com/kazupon/vue-i18n-locale-message#readme",
+  "homepage": "https://github.com/Irevall/vue-i18n-locale-message",
   "keywords": [
     "i18n",
     "messages",
@@ -83,12 +83,12 @@
   "license": "MIT",
   "main": "lib/index.js",
   "peerDependencies": {
-    "vue": "^2.6",
-    "vue-template-compiler": "^2.6"
+    "vue": "^2.4",
+    "vue-template-compiler": "^2.4"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kazupon/vue-i18n-locale-message.git"
+    "url": "git+https://github.com/Irevall/vue-i18n-locale-message.git"
   },
   "scripts": {
     "build": "tsc -p .",
