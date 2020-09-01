@@ -6,3 +6,6 @@ node_modules
 *~
 .vscode
 .idea
+.env
+local-test
+lib/local-test
