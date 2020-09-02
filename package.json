@@ -1,7 +1,7 @@
 {
   "name": "@kubajmarek/vue-i18n-locale-message",
   "description": "Fork of @kazupon/vue-i18n-locale-message for custom usage",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "Kuba Marek",
     "email": "kubajmarek@gmail.com"
