@@ -23,7 +23,7 @@ const debug = Debug('vue-i18n-locale-message:commands:squeeze')
 
 type SqueezeOptions = {
   target: string
-  split?: boolean
+  split: boolean
   bundleWith?: string
   bundleMatch?: string
   namespace?: string
@@ -48,7 +48,7 @@ export const builder = (args: Argv): Argv<SqueezeOptions> => {
     .option('split', {
       type: 'boolean',
       alias: 's',
-      default: false,
+      default: true,
       describe: 'split squeezed locale messages with locale'
     })
     .option('bundleWith', {
@@ -165,19 +165,19 @@ function writeLocaleMessages (messages: LocaleMessages, args: Arguments<SqueezeO
   if (!split) {
     fs.writeFileSync(output, stringifyContent(messages, args.format))
   } else {
-    splitLocaleMessages(output, messages)
+    splitLocaleMessages(output, messages, args.format)
   }
 }
 
-function splitLocaleMessages (path: string, messages: LocaleMessages) {
+function splitLocaleMessages (path: string, messages: LocaleMessages, format: string) {
   const locales: Locale[] = Object.keys(messages)
   const write = () => {
     locales.forEach(locale => {
-      fs.writeFileSync(`${path}/${locale}.json`, yaml.safeDump(messages, { indent: 2 }))
+      fs.mkdirSync(`${path}/${locale}`)
+      fs.writeFileSync(`${path}/${locale}/messages.${format}`, stringifyContent(messages, format))
     })
   }
   try {
-    fs.mkdirSync(path)
     write()
   } catch (err) {
     if (err.code === 'EEXIST') {
