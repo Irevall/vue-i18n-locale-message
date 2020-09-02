@@ -173,19 +173,18 @@ function splitLocaleMessages (path: string, messages: LocaleMessages, format: st
   const locales: Locale[] = Object.keys(messages)
   const write = () => {
     locales.forEach(locale => {
-      fs.mkdirSync(`${path}/${locale}`)
-      fs.writeFileSync(`${path}/${locale}/messages.${format}`, stringifyContent(messages, format))
+      const basePath = `${path}/${locale}`
+      if (!fs.existsSync(basePath)) {
+        fs.mkdirSync(basePath, { recursive: true })
+      }
+      fs.writeFileSync(`${basePath}/messages.${format}`, stringifyContent(messages, format))
     })
   }
   try {
     write()
   } catch (err) {
-    if (err.code === 'EEXIST') {
-      write()
-    } else {
-      console.error(err.message)
-      throw err
-    }
+    console.error(err.message)
+    throw err
   }
 }
 
