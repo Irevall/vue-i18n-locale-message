@@ -173,11 +173,10 @@ function splitLocaleMessages (path: string, messages: LocaleMessages, format: st
   const locales: Locale[] = Object.keys(messages)
   const write = () => {
     locales.forEach(locale => {
-      const basePath = `${path}/${locale}`
-      if (!fs.existsSync(basePath)) {
-        fs.mkdirSync(basePath, { recursive: true })
+      if (!fs.existsSync(path)) {
+        fs.mkdirSync(path, { recursive: true })
       }
-      fs.writeFileSync(`${basePath}/messages.${format}`, stringifyContent(messages[locale], format))
+      fs.writeFileSync(`${path}/${locale}.${format}`, stringifyContent(messages[locale], format))
     })
   }
   try {
