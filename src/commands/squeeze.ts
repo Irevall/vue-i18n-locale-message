@@ -177,7 +177,7 @@ function splitLocaleMessages (path: string, messages: LocaleMessages, format: st
       if (!fs.existsSync(basePath)) {
         fs.mkdirSync(basePath, { recursive: true })
       }
-      fs.writeFileSync(`${basePath}/messages.${format}`, stringifyContent(messages, format))
+      fs.writeFileSync(`${basePath}/messages.${format}`, stringifyContent(messages[locale], format))
     })
   }
   try {
