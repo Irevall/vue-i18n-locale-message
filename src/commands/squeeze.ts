@@ -12,6 +12,7 @@ import deepmerge from 'deepmerge'
 
 import {
   Locale,
+  LocaleMessage,
   LocaleMessages,
   MetaLocaleMessage,
   NamespaceDictionary
@@ -143,8 +144,9 @@ function generate (meta: MetaLocaleMessage, structurePrefix: boolean): LocaleMes
             }
             target = target[key]
           }
-            Object.assign(target, localeBlockMessages)
-            return messages
+
+          Object.assign(target, deepmerge(target, localeBlockMessages))
+          return messages
         }
         return messages
       }, messages)
