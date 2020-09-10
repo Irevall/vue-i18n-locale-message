@@ -9,7 +9,6 @@ import {
 import squeeze from '../squeezer'
 import fs from 'fs'
 import deepmerge from 'deepmerge'
-import yaml from 'js-yaml'
 
 import {
   Locale,
@@ -122,37 +121,35 @@ function generate (meta: MetaLocaleMessage, structurePrefix: boolean): LocaleMes
 
     if (!blocks.length || !blocks[0].messages) continue
 
-    if (structurePrefix || !structurePrefix) {
-      debug(`generate component = ${component}`)
-      const parsed = parsePath(target, component)
-      messages = blocks.reduce((messages, block) => {
-        debug(`generate current messages = ${JSON.stringify(messages)}`)
-        const locales = Object.keys(block.messages)
-        messages = assignLocales(locales, messages)
-        locales.reduce((messages, locale) => {
-          if (block.messages[locale]) {
-            const localeMessages = messages[locale]
-            const localeBlockMessages = block.messages[locale]
-            let target: any = localeMessages // eslint-disable-line
-            const hierarchy = structurePrefix ? parsed.hierarchy.concat() : []
-            while (hierarchy.length >= 0) {
-              const key = hierarchy.shift()
-              if (!key) {
-                break
-              }
-              if (!target[key]) {
-                target[key] = {}
-              }
-              target = target[key]
+    debug(`generate component = ${component}`)
+    const parsed = parsePath(target, component)
+    messages = blocks.reduce((messages, block) => {
+      debug(`generate current messages = ${JSON.stringify(messages)}`)
+      const locales = Object.keys(block.messages)
+      messages = assignLocales(locales, messages)
+      locales.reduce((messages, locale) => {
+        if (block.messages[locale]) {
+          const localeMessages = messages[locale]
+          const localeBlockMessages = block.messages[locale] as LocaleMessage[]
+          let target: any = localeMessages // eslint-disable-line
+          const hierarchy = structurePrefix ? parsed.hierarchy.concat() : []
+          while (hierarchy.length >= 0) {
+            const key = hierarchy.shift()
+            if (!key) {
+              break
             }
+            if (!target[key]) {
+              target[key] = {}
+            }
+            target = target[key]
+          }
             Object.assign(target, localeBlockMessages)
             return messages
-          }
-          return messages
-        }, messages)
+        }
         return messages
       }, messages)
-    }
+      return messages
+    }, messages)
   }
 
   return messages
